@@ -76,7 +76,7 @@ class NumpyEncoder(json.JSONEncoder):
 			return super(NumpyEncoder, self).default(obj)
 
 result = {}
-files = ['data/000000000000.jpg']#glob.glob('/disks/data4/zyli/coco2017data/train2017/*')
+files = glob.glob('/disks/data4/zyli/coco2017data/train2017/*') # ['data/000000000000.jpg'] #
 for seq, file in enumerate(files):
 	img_id = file.split('/')[-1].replace('.jpg', '')
 	print(seq, img_id)
