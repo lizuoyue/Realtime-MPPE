@@ -67,23 +67,6 @@ for v in tf.global_variables():
 	else:
 		assign_op.append(v.assign(weights))
 
-box_size = 368
-shapes = np.array([0.5, 1, 1.5, 2])
-
-def predict_heatmap(img):
-	size = max(img.shape[0], img.shape[1])
-	multipliers = (box_size * shapes) / size
-	res = np.zeros(img.shape[:2] + (19, ))
-	with tf.Session() as sess:
-		for item in assign_op:
-			item.op.run()
-		for m in multipliers:
-			input_img = cv2.resize(img, (0, 0), fx = m, fy = m, interpolation = cv2.INTER_CUBIC)[np.newaxis, ...]
-			l1, l2 = sess.run(pred_t, feed_dict = {img_t: input_img / 255.0 - 0.5})
-			res += cv2.resize(l2[0, ...], (img.shape[1], img.shape[0]), interpolation = cv2.INTER_CUBIC)
-		res /= len(multipliers)
-	return res
-
 class NumpyEncoder(json.JSONEncoder):
 	def default(self, obj):
 		if isinstance(obj, np.integer):
@@ -97,24 +80,44 @@ class NumpyEncoder(json.JSONEncoder):
 
 f = open('out.out', 'w')
 f.close()
-result = {}
-files = glob.glob('/disks/data4/zyli/coco2017data/train2017/*') # ['data/000000000000.jpg'] #
-for seq, file in enumerate(files):
-	img_id = file.split('/')[-1].replace('.jpg', '')
-	img = np.array(Image.open(file), np.float32)
-	t = time.time()
-	res = predict_heatmap(img)
-	t = time.time() - t
-	with open('out.out', 'a') as f:
-		f.write('%d, %s, %.3lf\n' % (seq, img_id, t))
-		f.flush()
-	res_single = []
-	for i in range(18):
-		res_single.append(find_peaks(res[..., i], res[..., i].max() * 0.4))
-	result[img_id] = res_single
-	if seq % 1000 == 999:
-		with open('heatmap_result.json', 'w') as fp:
-			fp.write(json.dumps(result, cls = NumpyEncoder))
-			fp.close()
+
+with tf.Session() as sess:
+	for item in assign_op:
+		item.op.run()
+
+	box_size = 368
+	shapes = np.array([0.5, 1, 1.5, 2])
+
+	def predict_heatmap(img):
+		size = max(img.shape[0], img.shape[1])
+		multipliers = (box_size * shapes) / size
+		res = np.zeros(img.shape[:2] + (19, ))
+		for m in multipliers:
+			input_img = cv2.resize(img, (0, 0), fx = m, fy = m, interpolation = cv2.INTER_CUBIC)[np.newaxis, ...]
+			l1, l2 = sess.run(pred_t, feed_dict = {img_t: input_img / 255.0 - 0.5})
+			res += cv2.resize(l2[0, ...], (img.shape[1], img.shape[0]), interpolation = cv2.INTER_CUBIC)
+		res /= len(multipliers)
+		return res
+
+	result = {}
+	files = glob.glob('/disks/data4/zyli/coco2017data/train2017/*') # ['data/000000000000.jpg'] # 
+	files.sort()
+	for seq, file in enumerate(files):
+		img_id = file.split('/')[-1].replace('.jpg', '')
+		img = np.array(Image.open(file), np.float32)
+		t = time.time()
+		res = predict_heatmap(img)
+		t = time.time() - t
+		with open('out.out', 'a') as f:
+			f.write('%d, %s, %dx%d, %.3lf\n' % (seq, img_id, img.shape[1], img.shape[0], t))
+			f.flush()
+		res_single = []
+		for i in range(18):
+			res_single.append(find_peaks(res[..., i], res[..., i].max() * 0.4))
+		result[img_id] = res_single
+		if seq % 1000 == 0:
+			with open('heatmap_result.json', 'w') as fp:
+				fp.write(json.dumps(result, cls = NumpyEncoder))
+				fp.close()
 
 
