@@ -9,7 +9,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from PIL import Image
-import cv2, json, socket, glob
+import cv2, json, socket, glob, time
 
 def setAvaiGPUs(num_gpus = 1):
 	import subprocess as sp
@@ -95,13 +95,19 @@ class NumpyEncoder(json.JSONEncoder):
 		else:
 			return super(NumpyEncoder, self).default(obj)
 
+f = open('out.out', 'w')
+f.close()
 result = {}
 files = glob.glob('/disks/data4/zyli/coco2017data/train2017/*') # ['data/000000000000.jpg'] #
 for seq, file in enumerate(files):
 	img_id = file.split('/')[-1].replace('.jpg', '')
-	print(seq, img_id)
 	img = np.array(Image.open(file), np.float32)
+	t = time.time()
 	res = predict_heatmap(img)
+	t = time.time() - t
+	with open('out.out', 'a') as f:
+		f.write('%d, %s, %.3lf\n' % (seq, img_id, t))
+		f.flush()
 	res_single = []
 	for i in range(18):
 		res_single.append(find_peaks(res[..., i], res[..., i].max() * 0.4))
