@@ -104,17 +104,17 @@ with tf.Session() as sess:
 	files.sort()
 	for seq, file in enumerate(files):
 		img_id = file.split('/')[-1].replace('.jpg', '')
-		img = np.array(Image.open(file), np.float32)
+		img = np.array(Image.open(file).convert('RGB'), np.float32)
 		t = time.time()
 		res = predict_heatmap(img)
-		t = time.time() - t
-		with open('out.out', 'a') as f:
-			f.write('%d, %s, %dx%d, %.3lf\n' % (seq, img_id, img.shape[1], img.shape[0], t))
-			f.flush()
 		res_single = []
 		for i in range(18):
 			res_single.append(find_peaks(res[..., i], res[..., i].max() * 0.4))
 		result[img_id] = res_single
+		t = time.time() - t
+		with open('out.out', 'a') as f:
+			f.write('%d, %s, %dx%d, %.3lf\n' % (seq, img_id, img.shape[1], img.shape[0], t))
+			f.flush()
 		if seq % 1000 == 0:
 			with open('heatmap_result.json', 'w') as fp:
 				fp.write(json.dumps(result, cls = NumpyEncoder))
