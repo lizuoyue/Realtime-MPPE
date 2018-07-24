@@ -9,7 +9,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from PIL import Image
-import cv2, json, socket
+import cv2, json, socket, glob
 
 def setAvaiGPUs(num_gpus = 1):
 	import subprocess as sp
