@@ -100,7 +100,7 @@ with tf.Session() as sess:
 		return res
 
 	result = {}
-	files = glob.glob('/disks/data4/zyli/coco2017data/train2017/*') # ['data/000000000000.jpg'] # 
+	files = glob.glob('/disks/data4/zyli/coco2017data/val2017/*') # ['data/000000000000.jpg'] # 
 	files.sort()
 	for seq, file in enumerate(files):
 		img_id = file.split('/')[-1].replace('.jpg', '')
