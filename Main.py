@@ -35,7 +35,7 @@ def find_peaks_with_val(heatmap, th, gaussian = False):
 	if gaussian:
 		from scipy.ndimage.filters import gaussian_filter
 		heatmap = gaussian_filter(heatmap, sigma = 3)
-	# heatmap[heatmap < th] = 0
+	heatmap[heatmap < th] = 0
 	map_l = np.zeros(heatmap.shape)
 	map_l[1:, :] = heatmap[:-1, :]
 	map_r = np.zeros(heatmap.shape)
