@@ -99,11 +99,13 @@ with tf.Session() as sess:
 		res /= len(multipliers)
 		return res
 
-	result = {}
-	files = glob.glob('/disks/data4/zyli/coco2017data/val2017/*') # ['data/000000000000.jpg'] # 
+	result = json.load(open('heatmap_train2017.json'))
+	files = glob.glob('/disks/data4/zyli/coco2017data/train2017/*') # ['data/000000000000.jpg'] # 
 	files.sort()
 	for seq, file in enumerate(files):
 		img_id = file.split('/')[-1].replace('.jpg', '')
+		if img_id in result:
+			continue
 		img = np.array(Image.open(file).convert('RGB'), np.float32)
 		t = time.time()
 		res = predict_heatmap(img)
@@ -115,9 +117,8 @@ with tf.Session() as sess:
 		with open('out.out', 'a') as f:
 			f.write('%d, %s, %dx%d, %.3lf\n' % (seq, img_id, img.shape[1], img.shape[0], t))
 			f.flush()
-		if seq % 1000 == 0:
-			with open('heatmap_result.json', 'w') as fp:
-				fp.write(json.dumps(result, cls = NumpyEncoder))
-				fp.close()
+	with open('heatmap_train2017_.json', 'w') as fp:
+		fp.write(json.dumps(result, cls = NumpyEncoder))
+		fp.close()
 
 
