@@ -35,7 +35,7 @@ def find_peaks_with_val(heatmap, th, gaussian = False):
 	if gaussian:
 		from scipy.ndimage.filters import gaussian_filter
 		heatmap = gaussian_filter(heatmap, sigma = 3)
-	heatmap[heatmap < th] = 0
+	# heatmap[heatmap < th] = 0
 	map_l = np.zeros(heatmap.shape)
 	map_l[1:, :] = heatmap[:-1, :]
 	map_r = np.zeros(heatmap.shape)
@@ -46,10 +46,10 @@ def find_peaks_with_val(heatmap, th, gaussian = False):
 	map_d[:, :-1] = heatmap[:, 1:]
 
 	peaks_binary = np.logical_and.reduce(
-		(heatmap >= map_l, heatmap >= map_r, heatmap >= map_u, heatmap >= map_d)
+		(heatmap >= map_l, heatmap >= map_r, heatmap >= map_u, heatmap >= map_d, heatmap >= th)
 	)
 	peaks = [item for item in zip(np.nonzero(peaks_binary)[1], np.nonzero(peaks_binary)[0])]
-	peaks = [(x, y, int(heatmap[y, x] * 10000)) for x, y in peaks]
+	# peaks = [(x, y, int(heatmap[y, x] * 10000)) for x, y in peaks]
 	return peaks
 
 img_t = tf.placeholder(tf.float32, [None, None, None, 3])
