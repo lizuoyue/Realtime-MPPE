@@ -31,10 +31,11 @@ def setAvaiGPUs(num_gpus = 1):
 if socket.gethostname() == 'ait-server-03':
 	setAvaiGPUs()
 
-def find_peaks(heatmap, th, gaussian = False):
+def find_peaks_with_val(heatmap, th, gaussian = False):
 	if gaussian:
 		from scipy.ndimage.filters import gaussian_filter
 		heatmap = gaussian_filter(heatmap, sigma = 3)
+	heatmap[heatmap < th] = 0
 	map_l = np.zeros(heatmap.shape)
 	map_l[1:, :] = heatmap[:-1, :]
 	map_r = np.zeros(heatmap.shape)
@@ -45,9 +46,10 @@ def find_peaks(heatmap, th, gaussian = False):
 	map_d[:, :-1] = heatmap[:, 1:]
 
 	peaks_binary = np.logical_and.reduce(
-		(heatmap >= map_l, heatmap >= map_r, heatmap >= map_u, heatmap >= map_d, heatmap > th)
+		(heatmap >= map_l, heatmap >= map_r, heatmap >= map_u, heatmap >= map_d)
 	)
 	peaks = [item for item in zip(np.nonzero(peaks_binary)[1], np.nonzero(peaks_binary)[0])]
+	peaks = [(x, y, heatmap[y, x]) for x, y in peaks]
 	return peaks
 
 img_t = tf.placeholder(tf.float32, [None, None, None, 3])
@@ -78,6 +80,8 @@ class NumpyEncoder(json.JSONEncoder):
 		else:
 			return super(NumpyEncoder, self).default(obj)
 
+choose = sys.argv[1]
+os.popen('mkdir heatmap_%s' % choose)
 f = open('out.out', 'w')
 f.close()
 
@@ -99,8 +103,8 @@ with tf.Session() as sess:
 		res /= len(multipliers)
 		return res
 
-	result = json.load(open('heatmap_result.json'))
-	files = glob.glob('/disks/data4/zyli/coco2017data/val2017/*') # ['data/000000000000.jpg'] # 
+	result = {}
+	files = glob.glob('/disks/data4/zyli/coco2017data/%s/*' % choose) # ['data/000000000000.jpg'] # 
 	files.sort()
 	for seq, file in enumerate(files):
 		img_id = file.split('/')[-1].replace('.jpg', '')
@@ -111,13 +115,18 @@ with tf.Session() as sess:
 		res = predict_heatmap(img)
 		res_single = []
 		for i in range(18):
-			res_single.append(find_peaks(res[..., i], res[..., i].max() * 0.4))
+			res_single.append(find_peaks_with_val(res[..., i], res[..., i].max() * 0.4))
 		result[img_id] = res_single
+		np.save('heatmap_%s/%s.npy' % (choose, img_id))
 		t = time.time() - t
 		with open('out.out', 'a') as f:
 			f.write('%d, %s, %dx%d, %.3lf\n' % (seq, img_id, img.shape[1], img.shape[0], t))
 			f.flush()
-	with open('heatmap_val2017.json', 'w') as fp:
+		if seq % 1000 == 0:
+			with open('heatmap_%s.json' % choose, 'w') as fp:
+				fp.write(json.dumps(result, cls = NumpyEncoder))
+				fp.close()
+	with open('heatmap_%s.json' % choose, 'w') as fp:
 		fp.write(json.dumps(result, cls = NumpyEncoder))
 		fp.close()
 
