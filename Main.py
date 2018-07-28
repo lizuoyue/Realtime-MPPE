@@ -99,8 +99,8 @@ with tf.Session() as sess:
 		res /= len(multipliers)
 		return res
 
-	result = json.load(open('heatmap_train2017.json'))
-	files = glob.glob('/disks/data4/zyli/coco2017data/train2017/*') # ['data/000000000000.jpg'] # 
+	result = json.load(open('heatmap_result.json'))
+	files = glob.glob('/disks/data4/zyli/coco2017data/val2017/*') # ['data/000000000000.jpg'] # 
 	files.sort()
 	for seq, file in enumerate(files):
 		img_id = file.split('/')[-1].replace('.jpg', '')
@@ -117,7 +117,7 @@ with tf.Session() as sess:
 		with open('out.out', 'a') as f:
 			f.write('%d, %s, %dx%d, %.3lf\n' % (seq, img_id, img.shape[1], img.shape[0], t))
 			f.flush()
-	with open('heatmap_train2017_.json', 'w') as fp:
+	with open('heatmap_val2017.json', 'w') as fp:
 		fp.write(json.dumps(result, cls = NumpyEncoder))
 		fp.close()
 
