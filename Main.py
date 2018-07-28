@@ -117,7 +117,8 @@ with tf.Session() as sess:
 		for i in range(18):
 			res_single.append(find_peaks_with_val(res[..., i], res[..., i].max() * 0.4))
 		result[img_id] = res_single
-		np.save('heatmap_%s/%s.npy' % (choose, img_id), res[..., -1])
+		hm = np.array(np.maximum(np.minimum(1 - res[..., -1], 1), 0) * 255.0, np.uint8)
+		np.save('heatmap_%s/%s.npy' % (choose, img_id), hm)
 		t = time.time() - t
 		with open('out.out', 'a') as f:
 			f.write('%d, %s, %dx%d, %.3lf\n' % (seq, img_id, img.shape[1], img.shape[0], t))
