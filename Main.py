@@ -49,7 +49,7 @@ def find_peaks_with_val(heatmap, th, gaussian = False):
 		(heatmap >= map_l, heatmap >= map_r, heatmap >= map_u, heatmap >= map_d)
 	)
 	peaks = [item for item in zip(np.nonzero(peaks_binary)[1], np.nonzero(peaks_binary)[0])]
-	peaks = [(x, y, heatmap[y, x]) for x, y in peaks]
+	peaks = [(x, y, int(heatmap[y, x] * 10000)) for x, y in peaks]
 	return peaks
 
 img_t = tf.placeholder(tf.float32, [None, None, None, 3])
@@ -118,7 +118,7 @@ with tf.Session() as sess:
 			res_single.append(find_peaks_with_val(res[..., i], res[..., i].max() * 0.4))
 		result[img_id] = res_single
 		hm = np.array(np.maximum(np.minimum(1 - res[..., -1], 1), 0) * 255.0, np.uint8)
-		np.save('heatmap_%s/%s.npy' % (choose, img_id), hm)
+		Image.fromarray(hm).save('heatmap_%s/%s.png' % (choose, img_id))
 		t = time.time() - t
 		with open('out.out', 'a') as f:
 			f.write('%d, %s, %dx%d, %.3lf\n' % (seq, img_id, img.shape[1], img.shape[0], t))
