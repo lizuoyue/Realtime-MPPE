@@ -32,6 +32,7 @@ if socket.gethostname() == 'ait-server-03':
 	setAvaiGPUs()
 
 def find_peaks_with_val(heatmap, th, gaussian = False):
+	hm10000 = np.array(heatmap * 10000, np.uint32)
 	if gaussian:
 		from scipy.ndimage.filters import gaussian_filter
 		heatmap = gaussian_filter(heatmap, sigma = 3)
@@ -49,8 +50,8 @@ def find_peaks_with_val(heatmap, th, gaussian = False):
 		(heatmap >= map_l, heatmap >= map_r, heatmap >= map_u, heatmap >= map_d, heatmap >= th)
 	)
 	peaks = [item for item in zip(np.nonzero(peaks_binary)[1], np.nonzero(peaks_binary)[0])]
-	# peaks = [(x, y, int(heatmap[y, x] * 10000)) for x, y in peaks]
-	return peaks
+	peaks_vals = [(x, y, int(hm10000[y, x])) for x, y in peaks]
+	return peaks_vals
 
 img_t = tf.placeholder(tf.float32, [None, None, None, 3])
 pred_t = Predict(img_t)
